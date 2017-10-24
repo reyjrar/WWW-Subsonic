@@ -8,6 +8,7 @@ use utf8;
 use CLI::Helpers qw(:output);
 use Data::Printer;
 use Getopt::Long::Descriptive;
+use HTML::Entities;
 use Path::Tiny;
 use Storable qw(retrieve store dclone);
 use WWW::Subsonic;
