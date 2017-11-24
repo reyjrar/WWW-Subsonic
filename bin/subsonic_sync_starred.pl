@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 # PODNAME: subsonic_sync_starred.pl
 # ABSTRACT: Download and/or sync starred media to a target directory
 use strict;

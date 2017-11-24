@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 # PODNAME: subsonic_import_ratings.pl
 # ABSTRACT: Import Ratings from an iTunes Library XML Export to a Subsonic Server
 use strict;
