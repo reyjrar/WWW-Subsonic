@@ -36,6 +36,7 @@ use Moo;
 use Types::Standard qw(Enum InstanceOf Int Str);
 use URI;
 use URI::QueryParam;
+use version 0.77;
 
 # Clean Up the Namespace
 use namespace::autoclean;
@@ -165,7 +166,7 @@ The Subsonic API verion to target, currently defaults to the latest, Subsonic
 has 'api_version' => (
     is       => 'ro',
     isa      => Str,
-    default  => sub { '1.15.0' },
+    default  => sub { '1.14.0' },
 );
 
 =attr B<client_id>
@@ -208,10 +209,11 @@ client identified, B<f> - format (json).
 sub api_request {
     my ($self,$path,$params) = @_;
 
-    my $uri = URI->new( sprintf "%s://%s:%d/rest/%s",
+    my $uri = URI->new( sprintf "%s://%s:%d/rest%s/%s",
         $self->protocol,
         $self->server,
         $self->port,
+        version->parse($self->api_version) >= version->parse('2.0.0') ? 2 : '',
         $path
     );
     my %q = (
@@ -239,7 +241,7 @@ sub api_request {
                 1;
             } or do {
                 my $err = $@;
-                warn sprintf "Failed JSON Decode from: %s",
+                warn sprintf "Failed JSON Decode from: %s\n%s\n\n%s\n",
                     $as_url, $err, $result->message;
             };
         }
@@ -249,7 +251,7 @@ sub api_request {
         }
     }
     else {
-        warn sprintf "Failed request: %s\n\n%s\n",
+        warn sprintf "Failed request(%s): %s\n\n%s\n",
             $as_url,
             $result->message,
             $result->body,

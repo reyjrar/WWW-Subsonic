@@ -16,11 +16,12 @@ use WWW::Subsonic;
 my ($opt,$usage) = describe_options('%c - %o iTunesLibrary.xml',
     ["Subsonic API Details"],
     ['server|S=s',        "Subsonic Server name, default localhost", { default => 'localhost' } ],
-    ['port|P:s',          "Subsonic Server port, default 4000", { default => "4000" }],
+    ['port|P:s',          "Subsonic Server port, default 4040", { default => 4040 }],
     ['username|user|u:s', "Subsonic Username, required." ],
     ['password-file|p:s', "File containing the password for the subsonic user, default: ~/.subsonic_password",
         { default => "$ENV{HOME}/.subsonic_password", callback => { 'must be a valid file' => sub { -f $_[0] } } }
     ],
+    ['api-version:s',     "Specify the API Version, defaults to using the WWW::Subsonic default."],
     ["insecure|http",     "Use Insecure HTTP for communication"],
     [],
     ["Import Behavior"],
@@ -58,6 +59,7 @@ my $subsonic = WWW::Subsonic->new(
     password => $password,
     protocol => $opt->insecure ? 'http' : 'https',
     port     => $opt->port,
+    $opt->api_version ? ( api_version => $opt->api_version ) : (),
 );
 
 my %SongsByArtist;
@@ -161,7 +163,7 @@ while(<<>>) {
                         );
                         my $rating = sprintf "%0.1f", $song{Rating} / 20;
                         foreach my $song_id ( @sids ) {
-                            my $result = $subsonic->api_request('setRating' => { id => $song_id, rating => $rating });
+                            my $result = $subsonic->api_request('setRating.view' => { id => $song_id, rating => $rating });
                             if( $rating >= $opt->star_rating ) {
                                 my $result = $subsonic->api_request( star => { id => $song_id } );
                             }
