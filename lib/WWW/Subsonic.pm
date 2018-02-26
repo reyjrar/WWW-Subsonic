@@ -166,7 +166,7 @@ The Subsonic API verion to target, currently defaults to the latest, Subsonic
 has 'api_version' => (
     is       => 'ro',
     isa      => Str,
-    default  => sub { '1.14.0' },
+    default  => sub { '1.15.0' },
 );
 
 =attr B<client_id>
