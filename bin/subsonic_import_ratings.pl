@@ -125,7 +125,7 @@ unless( keys %SongsByArtist ) {
 debug_var(\%SongsByArtist);
 
 my ($section,%song,%TRACKS);
-while(<>) {
+while(<<>>) {
     chomp;
     next unless /^\t/;
     if( my ($capture) = m{^\t<key>(\w+(?:\s+\w+)*)<\/key>$} ) {
