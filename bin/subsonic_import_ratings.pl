@@ -128,7 +128,7 @@ my ($section,%song,%TRACKS);
 while(<<>>) {
     chomp;
     next unless /^\t/;
-    if( my ($capture) = m{^\t<key>(\w+(?:\s+\w+)*)<\/key>$} ) {
+    if( my ($capture) = m{^\t<key>(\w+(?:\s+\w+)*)</key>$} ) {
         $section = $capture;
         next;
     }
