@@ -9,6 +9,7 @@ This module provides a very simple interface to using the Subsonic API.
     use WWW::Subsonic;
 
     my $subsonic = WWW::Subsonic->new(
+        url      => "https://music.local:4040/",
         username => 'user1',
         password => 'Assw0rd1P',
     );
@@ -27,12 +28,14 @@ This module provides a very simple interface to using the Subsonic API.
 
 use strict;
 use warnings;
+use feature 'state';
 
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(decode_entities);
 use JSON::MaybeXS;
 use Mojo::UserAgent;
 use Moo;
+use Net::Netrc;
 use Types::Standard qw(Enum InstanceOf Int Str);
 use URI;
 use URI::QueryParam;
@@ -41,68 +44,66 @@ use version 0.77;
 # Clean Up the Namespace
 use namespace::autoclean;
 
+
+sub _netrc {
+    my $self = shift;
+    state $netrc;
+
+    return $netrc if $netrc;
+
+    my $uri = URI->new( $self->url );
+    $netrc = Net::Netrc->lookup( $uri->host );
+    return $netrc;
+}
+
 # VERSION
 
-=attr B<protocol>
+=attr B<url>
 
-Subsonic protocol, https (the default) or http.
-
-=cut
-
-has 'protocol' => (
-    is      => 'ro',
-    isa     => Enum[qw(http https)],
-    default => sub { 'https' },
-);
-
-=attr B<server>
-
-Subsonic server name, defaults to localhost
+Subsonic server url, default is 'http://localhost:4000'
 
 =cut
 
-has 'server' => (
+has 'url' => (
     is      => 'ro',
     isa     => Str,
-    default => sub { 'localhost' },
-);
-
-=attr B<port>
-
-Subsonic server port, default 4000
-
-=cut
-
-has 'port' => (
-    is      => 'ro',
-    isa     => Int,
-    default => sub { 'localhost' },
+    default => sub { 'http://localhost:4000' },
 );
 
 =attr B<username>
 
-Subsonic username, B<required>.
+Subsonic username, if not specified, will try a lookup via netrc.
 
 =cut
 
 has 'username' => (
-    is       => 'ro',
-    isa      => Str,
-    required => 1,
+    is  => 'lazy',
+    isa => Str,
 );
+
+sub _build_username {
+    my $self = shift;
+    my $n = $self->_netrc;
+    return $self->_netrc->login || 'brad';
+}
 
 =attr B<password>
 
-Subsonic user's password, B<required>.  This is never sent over the wire,
-instead it's hashed using a salt for the server to verify.
+Subsonic user's password, if not specified will try a lookup via netrc.  This
+is never sent over the wire, instead it's hashed using a salt for the server to
+verify.
 
 =cut
 
 has 'password' => (
-    is       => 'ro',
-    isa      => Str,
-    required => 1,
+    is  => 'lazy',
+    isa => Str,
 );
+
+sub _build_password {
+    my $self = shift;
+    return $self->_netrc->password;
+}
 
 =attr B<salt>
 
@@ -209,10 +210,8 @@ client identified, B<f> - format (json).
 sub api_request {
     my ($self,$path,$params) = @_;
 
-    my $uri = URI->new( sprintf "%s://%s:%d/rest%s/%s",
-        $self->protocol,
-        $self->server,
-        $self->port,
+    my $uri = URI->new( sprintf "%s/rest%s/%s",
+        $self->url,
         version->parse($self->api_version) >= version->parse('2.0.0') ? 2 : '',
         $path
     );
